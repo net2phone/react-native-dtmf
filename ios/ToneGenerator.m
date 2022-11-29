@@ -124,7 +124,7 @@ OSStatus RenderTone(
 
 {
   // Fixed amplitude is good enough for our purposes
-  const double amplitude = 0.25;
+  const double amplitude = 0.9;
   
   // This is a mono tone generator so we only need the first buffer
   const int channel = 0;
