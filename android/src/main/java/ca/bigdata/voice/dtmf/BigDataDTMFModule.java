@@ -12,19 +12,21 @@ import java.util.HashMap;
 import android.media.ToneGenerator;
 import android.media.AudioManager;
 
+import android.content.Context;
+import android.util.Log;
+
 public class BigDataDTMFModule extends ReactContextBaseJavaModule {
 
   private final ReactApplicationContext reactContext;
+
+  private final String TAG = "ca.bigdata.voice.dtmf.BigDataDTMFModule";
 
   public BigDataDTMFModule(ReactApplicationContext reactContext) {
     super(reactContext);
     this.reactContext = reactContext;
   }
 
-  private ToneGenerator mToneGenerator= new ToneGenerator(
-    AudioManager.STREAM_DTMF,
-    ToneGenerator.MAX_VOLUME
-  );
+  private ToneGenerator mToneGenerator;
 
   @Override
   public String getName() {
@@ -55,18 +57,37 @@ public class BigDataDTMFModule extends ReactContextBaseJavaModule {
     return constants;
   }
 
+  private int resolveStreamType() {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      int audioMode = audioManager.getMode();
+      return audioMode == AudioManager.MODE_IN_CALL || audioMode == AudioManager.MODE_IN_COMMUNICATION ? AudioManager.STREAM_VOICE_CALL : AudioManager.STREAM_MUSIC;
+    } catch(Exception e) {
+      Log.e(TAG, "Error resolving stream type", e);
+    }
+    return AudioManager.STREAM_MUSIC;
+  }
+
   @ReactMethod
   public void playTone(int tone, int duration) {
+    int streamType = resolveStreamType();
+    mToneGenerator = new ToneGenerator(streamType, ToneGenerator.MAX_VOLUME);
     mToneGenerator.startTone(tone, duration);
   }
 
   @ReactMethod
   public void startTone(int tone) {
-    mToneGenerator.startTone(tone, 5000);
+    playTone(tone, 5000);
   }
 
   @ReactMethod
   public void stopTone() {
+    if (mToneGenerator == null) {
+      return;
+    }
+
     mToneGenerator.stopTone();
+    mToneGenerator.release();
+    mToneGenerator = null;
   }
 }
