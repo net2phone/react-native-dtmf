@@ -68,10 +68,23 @@ public class BigDataDTMFModule extends ReactContextBaseJavaModule {
     return AudioManager.STREAM_MUSIC;
   }
 
+  private boolean isMuted() {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      if (audioManager.getRingerMode() ==  AudioManager.RINGER_MODE_NORMAL) {
+        return false;
+      }
+      return true;
+    } catch(Exception e) {
+      Log.e(TAG, "Error resolving muted state", e);
+    }
+    return false;
+  }
+
   @ReactMethod
   public void playTone(int tone, int duration) {
     int streamType = resolveStreamType();
-    mToneGenerator = new ToneGenerator(streamType, ToneGenerator.MAX_VOLUME);
+    mToneGenerator = new ToneGenerator(streamType, isMuted() ? ToneGenerator.MIN_VOLUME : ToneGenerator.MAX_VOLUME);
     mToneGenerator.startTone(tone, duration);
   }
 
