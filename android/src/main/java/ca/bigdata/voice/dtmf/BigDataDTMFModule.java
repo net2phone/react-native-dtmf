@@ -81,10 +81,42 @@ public class BigDataDTMFModule extends ReactContextBaseJavaModule {
     return false;
   }
 
+  private int getStreamVolume(int streamType) {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      return audioManager.getStreamVolume(streamType);
+    } catch(Exception e) {
+      Log.e(TAG, "Error resolving current stream volume", e);
+    }
+    return ToneGenerator.MAX_VOLUME;
+  }
+
+  private int getStreamMaxVolume(int streamType) {
+    try {
+      AudioManager audioManager = (AudioManager) reactContext.getSystemService(Context.AUDIO_SERVICE);
+      return audioManager.getStreamMaxVolume(streamType);
+    } catch(Exception e) {
+      Log.e(TAG, "Error resolving stream max volume", e);
+    }
+    return ToneGenerator.MAX_VOLUME;
+  }
+
+  private int calcRelativeStreamVolume(int streamVolume, int streamMaxVolume) {
+    if (streamMaxVolume <= 0) {
+      return ToneGenerator.MAX_VOLUME;
+    }
+
+    return (int) (((float) streamVolume / streamMaxVolume) * 100);
+  }
+
   @ReactMethod
   public void playTone(int tone, int duration) {
     int streamType = resolveStreamType();
-    mToneGenerator = new ToneGenerator(streamType, isMuted() ? ToneGenerator.MIN_VOLUME : ToneGenerator.MAX_VOLUME);
+    int streamVolume = getStreamVolume(streamType);
+    int streamMaxVolume = getStreamMaxVolume(streamType);
+    int relativeStreamVolume = calcRelativeStreamVolume(streamVolume, streamMaxVolume);
+
+    mToneGenerator = new ToneGenerator(streamType, isMuted() ? ToneGenerator.MIN_VOLUME : relativeStreamVolume);
     mToneGenerator.startTone(tone, duration);
   }
 
