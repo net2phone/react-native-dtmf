@@ -12,6 +12,7 @@ buildscript {
 apply plugin: 'com.android.library'
 
 android {
+    namespace 'ca.bigdata.voice.dtmf'
     compileSdkVersion 23
     buildToolsVersion '25.0.0'
 
